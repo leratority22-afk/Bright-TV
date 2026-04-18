@@ -1,0 +1,110 @@
+select * from `workspace`.`default`.`userprpfile` limit 100
+
+-----------------------------------------------------------------------
+----Joining the user and the viwers table
+
+SELECT* 
+FROM `workspace`.`default`.`userprpfile` up
+     INNER JOIN viewer_profile vp
+     ON up.UserID = UserID0;
+
+SELECT A.UserID,
+       A.Gender,
+       A.Race,
+       A.Province,
+       A.Age,
+       B.Channel2,
+       B.RecordDate2,
+       B.`Duration 2`
+FROM userprpfile AS A
+FULL OUTER JOIN viewer_profile AS B
+ON A.UserID = B.UserID0;
+
+--------------------------------------------------------------------------
+
+---Coverting UTC time to SA time
+SELECT*,
+      from_utc_timestamp(v.RecordDate2, 'Africa/Johannesburg') AS sast_timestamp
+FROM `workspace`.`default`.`viewer_profile` v;
+
+
+
+----------------------------------------------------------------------------
+---Count users by province
+
+SELECT COUNT(UserID) AS User_count_by_Province  
+FROM `workspace`.`default`.`userprpfile`
+GROUP BY Province 
+ORDER BY User_count_by_Province DESC;
+
+
+
+--------------------------------------------------------------------------------
+---Most watched shows by viewers
+
+SELECT CHANNEL2,
+      COUNT(UserID0) AS Channel2_viewerprofile
+      FROM `workspace`.`default`.`viewer_profile`
+      GROUP BY CHANNEL2
+      ORDER BY Channel2_viewerprofile DESC;
+
+
+
+---------------------------------------------------------------------------------
+
+SELECT 
+     CASE 
+         WHEN DATE_FORMAT(RecordDate2, 'HH:mm:ss') BETWEEN '05:00:00' AND '11:59:59' THEN 'Morning_viewing'
+         WHEN DATE_FORMAT(RecordDate2, 'HH:mm:ss') BETWEEN '12:00:00' AND '17:59:59' THEN 'Afternoon_viewing'
+         WHEN DATE_FORMAT(RecordDate2, 'HH:mm:ss') BETWEEN '18:00:00' AND '23:59:59' THEN 'Evening_viewing'
+         Else 'Midnight_viewing'
+      END AS Viewing_slot,
+      COUNT(UserID0) AS USER_COUNT 
+FROM `workspace`.`default`.`viewer_profile`
+GROUP BY Viewing_slot
+ORDER BY User_Count DESC;
+
+----------------------------------------------------------------------------------
+---Split by Gender on User profile
+SELECT GENDER, 
+     COUNT(userID) AS Male_Female_split
+FROM `workspace`.`default`.`userprpfile`
+GROUP BY GENDER
+ORDER BY Male_Female_split DESC;
+
+---------------------------------------------------------------------------------
+---viewers split by gender
+ SELECT 
+      CASE 
+          WHEN u.AGE IS NULL THEN 'Unknown'
+          WHEN u.AGE < 13 THEN 'Child'
+          WHEN u.AGE >= 13 AND u.AGE < 18 THEN 'Teen'
+          WHEN u.AGE >= 18 AND u.AGE < 30 THEN 'Young Adult'
+          WHEN u.AGE >= 30 AND u.AGE < 50 THEN 'Adult' 
+          WHEN u.AGE >= 50 AND u.AGE < 65 THEN 'Middle Aged'
+          When u.age >= 65 THEN 'Senior'
+          ELSE 'Othe'
+      END AS AGE_GROUP,
+      COUNT(v.UserID0) AS USER_COUNT
+ FROM  `workspace`.`default`.`viewer_profile` v
+ LEFT JOIN `workspace`.`default`.`userprpfile` u
+ ON v.UserID0 = u.UserID
+ GROUP BY AGE_GROUP 
+ ORDER BY USER_COUNT DESC;
+    
+------------------------------------------------------------------
+--- Replacing NULL Value and separating the timestamp
+SELECT 
+    IFNULL(ROUND(u.USERID,0),'0') AS USER_ID,
+    IFNULL(u.GENDER, 'NO_Gender') AS GENDER,
+    IFNULL(u.RACE, 'NO_Race') AS RACE,
+    IFNULL(ROUND(u.AGE,0),'0') AS AGE,
+    IFNULL(u.PROVINCE, 'NO_Province') AS PROVINCE,
+    IFNULL(v.CHANNEL2, 'NO_Channel') AS CHANNEL2,
+    v.RECORDDATE2 AS RECORDDATE2,
+    v.RECORDDATE2 AS TIMESTAMP_VALUE,
+    CAST(v.RECORDDATE2 AS DATE) AS DATE_PART,
+    TO_CHAR(v.RECORDDATE2, 'HH:mm:ss') AS TIME_PART
+FROM `workspace`.`default`.`userprpfile` u
+LEFT JOIN `workspace`.`default`.`viewer_profile` v
+ON u.USERID = v.USERID0;
